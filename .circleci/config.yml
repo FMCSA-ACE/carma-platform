@@ -39,6 +39,8 @@ jobs:
     # Pull code and execute tests
     # Name of each run command defines purpose use
     steps:
+      - setup_remote_docker :
+          docker_layer_caching: true    
       - run:
           name: Create src folder
           command: |
@@ -68,6 +70,11 @@ jobs:
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
+      - run:
+          name: Build&Push_develop
+          command: |
+            docker build -t usdotfhwastoldev/carma-platform:dockertest -f Dockerfile .
+            docker push usdotfhwastoldev/carma-platform:dockertest
           
       # Run SonarCloud analysis
       # PR Branchs and number extracted from Circle variables and github api
