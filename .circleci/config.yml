@@ -70,6 +70,10 @@ jobs:
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
+      - run:
+          name: Install Docker client
+          command: |
+            apk add docker-cli      
       - run: 
           name: Docker Build
           command: |
