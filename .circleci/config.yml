@@ -70,21 +70,22 @@ jobs:
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-      - run:
-          name: Install Docker client
-          command: |
-            apk add docker-cli      
+  docker_build_push_Carma_Platform:
+    machine:
+     image: ubuntu-2004:202201-02
+    resource_class: large 
+    steps:
+      - checkout:
       - run: 
           name: Docker Build
           command: |
            docker build -t usdotfhwastoldev/carma-platform:dockertest -f Dockerfile .
-    
       - run: 
           name: Docker Push
           # Push carma-Platform docker image to usdotfhwastoldev dockerhub
           command: | 
            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-           docker push usdotfhwastoldev/carma-platform:dockertest     
+           docker push usdotfhwastoldev/carma-platform:dockertest            
       # Run SonarCloud analysis
       # PR Branchs and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
