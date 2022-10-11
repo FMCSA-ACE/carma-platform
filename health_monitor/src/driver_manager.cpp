@@ -215,6 +215,7 @@ namespace health_monitor
         if(truck==true)
         {
             std::string status = are_critical_drivers_operational_truck(time_now);
+            alert.driver_status = status;
             if(status.compare("s_1_l1_1_l2_1_g_1_c_1") == 0)
             {
                 starting_up_ = false;
@@ -281,6 +282,7 @@ namespace health_monitor
         else if(car==true)
         {
             std::string status = are_critical_drivers_operational_car(time_now);
+            alert.driver_status = status;
             if(status.compare("s_1_l_1_g_1_c_1") == 0)
             {
                 starting_up_ = false;

@@ -32,3 +32,6 @@ iss_score: 25
 
 #Permit Required: (Yes/No)  
 permit_required: false
+
+# valid operational time
+operational_time: 8-16

@@ -35,15 +35,20 @@ namespace truck_inspection_client
         pnh_->getParam("iss_score", iss_score_);
         pnh_->getParam("permit_required", permit_required_);
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
+        pnh_->getParam("operational_time", operational_time_);
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
         version_sub_ = nh_->subscribe("carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
+        // subscribe ads data requests
+        ads_health_request_sub_ = nh_->subscribe("ads_health_request", 1, &TruckInspectionClient::adsHealthRequestCallback, this);
+
         this->ads_engaged_ = false;
         this->ads_system_alert_type_ = std::to_string(cav_msgs::SystemAlert::NOT_READY);
         this->ads_software_version_ = "System Version Unknown";
+        this->driver_status_="s_0_l1_0_l2_0_g_0_c_0";
         //Checking: vin number does not exist yet in global parameter server
         while((!pnh_->getParam("/vin_number", vin_number_)) && vin_retrive_count < MAX_RETRIEVE_VIN_COUNT)
         {
@@ -100,6 +105,7 @@ namespace truck_inspection_client
     }
     void TruckInspectionClient::systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg){
         this->ads_system_alert_type_ = std::to_string(msg->type);
+        this->driver_status_= std::to_string(msg->driver_status);
     }
     void TruckInspectionClient::requestCallback(const cav_msgs::MobilityRequestConstPtr& msg)
     {
@@ -120,6 +126,32 @@ namespace truck_inspection_client
     void TruckInspectionClient::versionCallback(const std_msgs::StringConstPtr& msg)
     {
         this->ads_software_version_ = msg->data;
+    }
+    // ADS health data request callback
+    void TruckInspectionClient::adsHealthRequestCallback(const cav_msgs::ADSHealthConstPtr& msg)
+    {
+        cav_msgs::ADSHealth ads_health_msg;
+        ads_health_msg.operational_time = operational_time_;
+        std::string ads_auto_status = this->ads_engaged_ ? "Engaged" : "Not Engaged";
+        std::string ads_health_status = ads_system_alert_type_ ;
+        std::string driver_status = driver_status_;
+        std::string ads_status_light = adsStatusLight(ads_system_alert_type_);
+        std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s, driver_status: %s")
+                                                         % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_health_status % ads_auto_status % iss_score_ % permit_required_ % driver_status_);
+        long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+        ads_health_msg.m_header.timestamp = time;
+        ads_health_msg.ads_params = params;
+        ads_health_pub_.publish(ads_health_msg);
+    }
+    std::string TruckInspectionClient::adsStatusLight(string ads_health_status)
+    { 
+        if (ads_health_status == cav_msgs::SystemAlert::DRIVERS_READY){
+            return "green";
+        } else if(ads_health_status == cav_msgs::SystemAlert::SHUTDOWN){
+            return "red";
+        } else {
+            return "yellow";
+        }
     }
 
 }

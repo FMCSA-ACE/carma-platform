@@ -48,6 +48,8 @@ namespace truck_inspection_client
 
         // publisher for generated Mobility Operation messages
         ros::Publisher  mo_pub_;
+        // publisher for generated ADS Health messages
+        ros::Publisher  ads_health_pub_;
 
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
@@ -55,6 +57,8 @@ namespace truck_inspection_client
         ros::Subscriber ads_system_alert_sub_;
         ros::Subscriber version_sub_;
         ros::Subscriber bsm_sub_;
+        // subscriber for ADS health and safety project
+        ros::Subscriber ads_health_request_sub_;
 
         // initialize this node
         void initialize();
@@ -65,7 +69,10 @@ namespace truck_inspection_client
         void systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg);
         void versionCallback(const std_msgs::StringConstPtr& msg);
         void bsmCallback(const cav_msgs::BSMConstPtr& msg);
-
+        void adsHealthRequestCallback(const cav_msgs::ADSHealthConstPtr& msg);
+        
+        std::string TruckInspectionClient::adsStatusLight(string ads_health_status);
+        
         // truck info
         std::string vin_number_;
         std::string license_plate_;
@@ -83,6 +90,9 @@ namespace truck_inspection_client
         bool ads_engaged_;  
         std::string ads_system_alert_type_;  
         std::uint16_t vin_retrive_count = 0;
+        // Add for ADS health and status project
+        std::string operational_time_;
+        std::string driver_status_;
     };
 
 }
