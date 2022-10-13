@@ -26,6 +26,7 @@ namespace truck_inspection_client
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->getParam("/vin_number", vin_number_); //get vin from global params in UniqueVehicleParams.ymal
         pnh_->getParam("license_plate", license_plate_);
+        pnh_->getParam("usdot_number", usdot_number_);
         pnh_->getParam("state_short_name", state_short_name_);
         pnh_->getParam("carrier_name", carrier_name_);
         pnh_->getParam("carrier_id", carrier_id_);
@@ -35,7 +36,27 @@ namespace truck_inspection_client
         pnh_->getParam("iss_score", iss_score_);
         pnh_->getParam("permit_required", permit_required_);
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
+        // Added for ADS safety data message
+        pnh_->getParam("pre_trip_inspector", pre_trip_inspector_);
+        pnh_->getParam("inspector_id", inspector_id_);
+        pnh_->getParam("vehicle", vehicle_);
+        pnh_->getParam("gross_axle_weight", gross_axle_weight_);
+        pnh_->getParam("gross_veh_weight", gross_veh_weight_);
+        pnh_->getParam("overweight_permit_status", overweight_permit_status_);
+        pnh_->getParam("date_of_last_inspection", date_of_last_inspection_);
+        pnh_->getParam("date_of_pre_trip_inspection_tractor", date_of_pre_trip_inspection_tractor_);
+        pnh_->getParam("date_of_pre_trip_inspection_trailer", date_of_pre_trip_inspection_trailer_);
+        pnh_->getParam("ifta_status", ifta_status_);
+        pnh_->getParam("irp_status", irp_status_);
+        pnh_->getParam("truck_operational_health", truck_operational_health_);
+        pnh_->getParam("tractor_operational_health", tractor_operational_health_);
+        pnh_->getParam("trailer_operational_health", trailer_operational_health_);
+        pnh_->getParam("level_of_inspection", level_of_inspection_);
+        pnh_->getParam("origin", origin_);
+        pnh_->getParam("destination", destination_);
+        pnh_->getParam("nearest_roadside_inspection_facility", nearest_roadside_inspection_facility_);
         pnh_->getParam("operational_time", operational_time_);
+
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
@@ -44,6 +65,7 @@ namespace truck_inspection_client
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
         // subscribe ads data requests
         ads_health_request_sub_ = nh_->subscribe("ads_health_request", 1, &TruckInspectionClient::adsHealthRequestCallback, this);
+        ads_pretrip_request_sub_ = nh_->subscribe("ads_pretrip_request", 1, &TruckInspectionClient::adsPreTripRequestCallback, this);
 
         this->ads_engaged_ = false;
         this->ads_system_alert_type_ = std::to_string(cav_msgs::SystemAlert::NOT_READY);
@@ -128,30 +150,93 @@ namespace truck_inspection_client
         this->ads_software_version_ = msg->data;
     }
     // ADS health data request callback
-    void TruckInspectionClient::adsHealthRequestCallback(const cav_msgs::ADSHealthConstPtr& msg)
+    void TruckInspectionClient::adsHealthRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg)
     {
-        cav_msgs::ADSHealth ads_health_msg;
-        ads_health_msg.operational_time = operational_time_;
-        std::string ads_auto_status = this->ads_engaged_ ? "Engaged" : "Not Engaged";
-        std::string ads_health_status = ads_system_alert_type_ ;
-        std::string driver_status = driver_status_;
-        std::string ads_status_light = adsStatusLight(ads_system_alert_type_);
-        std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s, driver_status: %s")
-                                                         % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_health_status % ads_auto_status % iss_score_ % permit_required_ % driver_status_);
+        cav_msgs::ADSSafety ads_health_msg;
+
         long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+        ads_health_msg.type = "ADS Health and Status";
         ads_health_msg.m_header.timestamp = time;
-        ads_health_msg.ads_params = params;
-        ads_health_pub_.publish(ads_health_msg);
+        ads_health_msg.vin_number = vin_number_;
+        ads_health_msg.license_plate = license_plate_;
+        ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+        ads_health_msg.operational_time = operational_time_;
+        ads_safety_pub_.publish(ads_health_msg);
     }
-    std::string TruckInspectionClient::adsStatusLight(string ads_health_status)
-    { 
-        if (ads_health_status == cav_msgs::SystemAlert::DRIVERS_READY){
-            return "green";
-        } else if(ads_health_status == cav_msgs::SystemAlert::SHUTDOWN){
-            return "red";
-        } else {
-            return "yellow";
+
+    void TruckInspectionClient::adsPreTripRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg)
+    {
+        cav_msgs::ADSSafety ads_pretrip_msg;
+        adsHealthStatus(ads_system_alert_type_);
+
+        long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+        ads_pretrip_msg.m_header.timestamp = time;
+        ads_pretrip_msg.type = "Pretripinput";
+        ads_pretrip_msg.pre_trip_inspector = pre_trip_inspector_;
+        ads_pretrip_msg.inspector_id = inspector_id_;
+        ads_pretrip_msg.vehicle = vehicle_;
+        ads_pretrip_msg.vin = vin_number_;
+        ads_pretrip_msg.license_plate = license_plate_;
+        ads_pretrip_msg.state = state_short_name_;
+        ads_pretrip_msg.carrier_name = carrier_name_;
+        ads_pretrip_msg.carrier_id = carrier_id_;
+        ads_pretrip_msg.usdot_number = usdot_number_;
+        ads_pretrip_msg.gross_axle_weight = gross_axle_weight_;
+        ads_pretrip_msg.gross_veh_weight = gross_veh_weight_;
+        ads_pretrip_msg.overweight_permit_status = overweight_permit_status_;
+        ads_pretrip_msg.date_of_last_inspection = date_of_last_inspection_;
+        ads_pretrip_msg.date_of_pre_trip_inspection_tractor = date_of_pre_trip_inspection_tractor_;
+        ads_pretrip_msg.date_of_pre_trip_inspection_trailer = date_of_pre_trip_inspection_trailer_;
+        ads_pretrip_msg.iss_score = iss_score_;
+        ads_pretrip_msg.ifta_status = ifta_status_;
+        ads_pretrip_msg.irp_status = irp_status_;
+        ads_pretrip_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+        ads_pretrip_msg.truck_operational_health = truck_operational_health_;
+        ads_pretrip_msg.tractor_operational_health = tractor_operational_health_;
+        ads_pretrip_msg.trailer_operational_health = trailer_operational_health_;
+        ads_pretrip_msg.level_of_inspection = level_of_inspection_;
+        ads_pretrip_msg.origin = origin_;
+        ads_pretrip_msg.destination = destination_;
+        ads_pretrip_msg.nearest_roadside_inspection_facility = nearest_roadside_inspection_facility_;
+        ads_pretrip_msg.preclearance_system = "PrePass";
+        ads_safety_pub_.publish(ads_pretrip_msg);
+    }
+
+    cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type)
+    {
+        cav_msgs::ADSStatus ads_health_status;
+        switch(ads_system_alert_type)
+        {
+            case std::to_string(cav_msgs::SystemAlert::CAUTION):
+                ads_health_status.ads_health_status_ = "Unhealthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_CAUTION;
+                break;
+            case std::to_string(cav_msgs::SystemAlert::WARNING):
+                ads_health_status.ads_health_status_ = "Unhealthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_WARNING;
+                break;
+            case std::to_string(cav_msgs::SystemAlert::FATAL):
+                ads_health_status.ads_health_status_ = "Unhealthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
+                break;
+            case std::to_string(cav_msgs::SystemAlert::NOT_READY):
+                ads_health_status.ads_health_status_ = "Unhealthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_NOT_READY;
+                break;
+            case std::to_string(cav_msgs::SystemAlert::DRIVERS_READY):
+                ads_health_status.ads_health_status_ = "Healthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_READY;
+                break;
+            case std::to_string(cav_msgs::SystemAlert::SHUTDOWN):
+                ads_health_status.ads_health_status_ = "Unhealthy";
+                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
+                break;
+            default:
+                break;
         }
+        ads_health_status.driver_status = driver_status_;
+        
+        return ads_health_status;
     }
 
 }
