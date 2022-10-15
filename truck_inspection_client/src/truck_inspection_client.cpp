@@ -58,6 +58,7 @@ namespace truck_inspection_client
         pnh_->getParam("operational_time", operational_time_);
 
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
+        ads_safety_pub_ = nh_->advertise<cav_msgs::ADSSafety>("ads_safety_data", 5);
         request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
@@ -150,7 +151,7 @@ namespace truck_inspection_client
         this->ads_software_version_ = msg->data;
     }
     // ADS health data request callback
-    void TruckInspectionClient::adsHealthRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg)
+    void TruckInspectionClient::adsHealthRequestCallback(const std_msgs::StringConstPtr& msg)
     {
         cav_msgs::ADSSafety ads_health_msg;
 
@@ -163,8 +164,8 @@ namespace truck_inspection_client
         ads_health_msg.operational_time = operational_time_;
         ads_safety_pub_.publish(ads_health_msg);
     }
-
-    void TruckInspectionClient::adsPreTripRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg)
+    // ADS PreTrip data request callback
+    void TruckInspectionClient::adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg)
     {
         cav_msgs::ADSSafety ads_pretrip_msg;
         adsHealthStatus(ads_system_alert_type_);
@@ -204,39 +205,39 @@ namespace truck_inspection_client
 
     cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type)
     {
-        cav_msgs::ADSStatus ads_health_status;
+        cav_msgs::ADSStatus ads_status;
         switch(ads_system_alert_type)
         {
             case std::to_string(cav_msgs::SystemAlert::CAUTION):
-                ads_health_status.ads_health_status_ = "Unhealthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_CAUTION;
+                ads_status.ads_health_status_ = "yellow";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_CAUTION;
                 break;
             case std::to_string(cav_msgs::SystemAlert::WARNING):
-                ads_health_status.ads_health_status_ = "Unhealthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_WARNING;
+                ads_status.ads_health_status_ = "yellow";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_WARNING;
                 break;
             case std::to_string(cav_msgs::SystemAlert::FATAL):
-                ads_health_status.ads_health_status_ = "Unhealthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
+                ads_status.ads_health_status_ = "red";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
                 break;
             case std::to_string(cav_msgs::SystemAlert::NOT_READY):
-                ads_health_status.ads_health_status_ = "Unhealthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_NOT_READY;
+                ads_status.ads_health_status_ = "yellow";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_NOT_READY;
                 break;
             case std::to_string(cav_msgs::SystemAlert::DRIVERS_READY):
-                ads_health_status.ads_health_status_ = "Healthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_READY;
+                ads_status.ads_health_status_ = "green";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_READY;
                 break;
             case std::to_string(cav_msgs::SystemAlert::SHUTDOWN):
-                ads_health_status.ads_health_status_ = "Unhealthy";
-                ads_health_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
+                ads_status.ads_health_status_ = "red";
+                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
                 break;
             default:
                 break;
         }
-        ads_health_status.driver_status = driver_status_;
+        ads_status.driver_status = driver_status_;
         
-        return ads_health_status;
+        return ads_status;
     }
 
 }

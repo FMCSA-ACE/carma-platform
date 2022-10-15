@@ -71,8 +71,8 @@ namespace truck_inspection_client
         void systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg);
         void versionCallback(const std_msgs::StringConstPtr& msg);
         void bsmCallback(const cav_msgs::BSMConstPtr& msg);
-        void adsHealthRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg);
-        void adsPreTripRequestCallback(const cav_msgs::ADSSafetyConstPtr& msg);
+        void adsHealthRequestCallback(const std_msgs::StringConstPtr& msg);
+        void adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg);
         
         cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type);
         
