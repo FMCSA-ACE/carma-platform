@@ -23,7 +23,7 @@ find_package(rclcpp_components REQUIRED)
 
 find_package(std_msgs REQUIRED)
 find_package(cav_msgs REQUIRED)
-find_package(fmcsa_ace_msgs REQUIRED)
+find_package(carma_v2x_msgs REQUIRED)
 
 set(pluins_dependencies
   pluginlib
@@ -60,7 +60,7 @@ target_include_directories(cellular_driver PUBLIC
 
 ament_target_dependencies(
   cellular_driver
-  "fmcsa_ace_msgs"
+  carma_v2x_msgs
 )
 
 #install(TARGETS cellular_driver

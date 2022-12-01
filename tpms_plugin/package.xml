@@ -14,7 +14,7 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>fmcsa_ace_msgs</depend>
+  <depend>carma_v2x_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

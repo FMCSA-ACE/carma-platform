@@ -25,7 +25,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(rcutils)
 
 find_package(std_msgs REQUIRED)
-find_package(fmcsa_ace_msgs REQUIRED)
+find_package(carma_v2x_msgs REQUIRED)
 
 set(pluins_dependencies
   pluginlib
@@ -37,7 +37,7 @@ set(node_dependencies
    rclcpp_components
    rcutils
    std_msgs
-   fmcsa_ace_msgs
+   carma_v2x_msgs
 )
 
 link_directories(/workspaces/carma_ws/src/fmcsa-ace/curlpp)
@@ -61,7 +61,7 @@ target_include_directories(tpms_plugin PUBLIC
 
 ament_target_dependencies(
   tpms_plugin
-  "fmcsa_ace_msgs"
+  carma_v2x_msgs
 )
 
 install(
