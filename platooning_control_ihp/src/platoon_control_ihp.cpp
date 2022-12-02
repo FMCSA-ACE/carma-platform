@@ -60,14 +60,16 @@ namespace platoon_control_ihp
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("platoon_control_ihp/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatoonControlIHPPlugin/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlIHPPlugin::currentTwist_cb, this);
 
         // Platoon Info Subscriber
-        // TODO: consider changing the topic name so it is specific to ihp plugins (not sure if it is necessary)
-        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlIHPPlugin::platoonInfo_cb, this);
+        // topic name so it is specific to ihp plugins
+        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info_ihp", 1, &PlatoonControlIHPPlugin::platoonInfo_cb, this);
+
+        emergency_stop_sub_ = nh_->subscribe<std_msgs::Bool>("emergency_stop", 1, &PlatoonControlIHPPlugin::emergency_stop_cb, this);
 
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
@@ -78,7 +80,7 @@ namespace platoon_control_ihp
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlIHPPlugin::pose_cb, this);
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "platoon_control_ihp";
+        plugin_discovery_msg_.name = "PlatoonControlIHPPlugin";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
@@ -106,6 +108,15 @@ namespace platoon_control_ihp
     {
         initialize();
         ros::CARMANodeHandle::spin();
+    }
+
+    void PlatoonControlIHPPlugin::emergency_stop_cb(const std_msgs::BoolConstPtr& msg)
+    {
+        if (msg->data)
+        {
+            emergency_stop_flag=true;
+        }
+        
     }
 
     bool PlatoonControlIHPPlugin::controlTimerCb()
@@ -278,6 +289,7 @@ namespace platoon_control_ihp
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
+        pcw_.setEmergencyStopFlag(emergency_stop_flag);
 
 
         geometry_msgs::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);

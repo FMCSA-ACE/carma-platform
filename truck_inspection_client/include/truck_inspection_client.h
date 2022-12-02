@@ -75,7 +75,7 @@ namespace truck_inspection_client
         void adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg);
         
         cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type);
-        
+
         // truck info
         std::string vin_number_;
         std::string license_plate_;

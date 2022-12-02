@@ -19,7 +19,7 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the yield_pluginConfig
+ * \brief Stuct containing the algorithm configuration values for the YieldPluginConfig
  */
 struct PlatoonPluginConfig
 {
@@ -39,6 +39,7 @@ struct PlatoonPluginConfig
   double standStillHeadway              = 12.0;    // m
   double maxAllowedJoinTimeGap          = 15.0;    // s
   double maxAllowedJoinGap              = 90.0;    // m
+  double minAllowedJoinGap              = 5.0;    // m
   double longitudinalCheckThresold      = 85.0;    // m
   double desiredJoinTimeGap             = 4.0;     // s
   double desiredJoinGap                 = 30.0;    // m

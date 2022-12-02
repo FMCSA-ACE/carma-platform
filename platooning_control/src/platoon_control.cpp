@@ -65,7 +65,7 @@ namespace platoon_control
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("platoon_control/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPlugin::currentTwist_cb, this);
@@ -73,16 +73,20 @@ namespace platoon_control
         // Platoon Info Subscriber
         platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPlugin::platoonInfo_cb, this);
 
+        emergency_stop_sub_ = nh_->subscribe<std_msgs::Bool>("emergency_stop", 1, &PlatoonControlPlugin::emergency_stop_cb, this);
+
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
+        controller_setting_pub_=nh_->advertise<std_msgs::Float32>("controller_setting", 5, true);
         ctrl_pub_ = nh_->advertise<autoware_msgs::ControlCommandStamped>("ctrl_raw", 5, true);
         platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 1, true);
 
+        preview_point_pub_=nh_->advertise<visualization_msgs::Marker>("control_preview_point", 1, true);
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "platoon_control";
+        plugin_discovery_msg_.name = "PlatooningControlPlugin";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
@@ -111,6 +115,15 @@ namespace platoon_control
         ros::CARMANodeHandle::spin();
     }
 
+    void PlatoonControlPlugin::emergency_stop_cb(const std_msgs::BoolConstPtr& msg)
+    {
+        if (msg->data)
+        {
+            emergency_stop_flag=true;
+        }
+        
+    }
+
     bool PlatoonControlPlugin::controlTimerCb()
     {
         ROS_DEBUG_STREAM("In control timer callback ");
@@ -137,9 +150,46 @@ namespace platoon_control
         cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
 
+
+        ROS_DEBUG_STREAM("lookahead_point.x = "<<lookahead_point.x<<" ,lookahead_point.y = "<<lookahead_point.y);
+
+        visualization_msgs::Marker box;
+        box.header.frame_id = "map";
+        box.header.stamp = ros::Time::now();
+        box.lifetime = ros::Duration(1);
+        box.type = visualization_msgs::Marker::CUBE;
+        box.action = visualization_msgs::Marker::ADD;
+        box.id = 0;
+        box.scale.x=2;
+        box.scale.y=2;
+        box.scale.z=2;
+        box.pose.position.x = lookahead_point.x;
+        box.pose.position.y = lookahead_point.y;
+        box.pose.position.z = 0;
+        box.pose.orientation.x = 0;
+        box.pose.orientation.y = 0;
+        box.pose.orientation.z = 0;
+        box.pose.orientation.w = 1;
+        box.color.r = 0.0f;
+        box.color.g = 1.0f;
+        box.color.b = 0.0f;
+        box.color.a = 1.0;
+        preview_point_pub_.publish(box);
+
+
+
         trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
         
         generateControlSignals(second_trajectory_point, lookahead_point); 
+
+        //publish information for cooperative plugin xx
+        double lookahead_dist = config_.lookaheadRatio * current_speed_;
+        ROS_DEBUG_STREAM("lookahead based on speed: " << lookahead_dist);
+        lookahead_dist = std::max(config_.minLookaheadDist, lookahead_dist);
+        ROS_DEBUG_STREAM("final lookahead xx: " << lookahead_dist);
+        std_msgs::Float32 msg;
+        msg.data=lookahead_dist;
+        controller_setting_pub_.publish(msg);
 
         return true;
     }   
@@ -266,7 +316,7 @@ namespace platoon_control
         cmd_ctrl.header.stamp = ros::Time::now();
         cmd_ctrl.cmd.linear_velocity = linear_vel;
         ROS_DEBUG_STREAM("ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
-        cmd_ctrl.cmd.steering_angle = steering_angle;
+        cmd_ctrl.cmd.steering_angle = steering_angle-0.0/20.7/2;
         ROS_DEBUG_STREAM("ctrl command steering " << cmd_ctrl.cmd.steering_angle);
 
         return cmd_ctrl;
@@ -279,6 +329,7 @@ namespace platoon_control
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
+        pcw_.setEmergencyStopFlag(emergency_stop_flag);
 
 
         geometry_msgs::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);

@@ -40,10 +40,10 @@ PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr 
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  plugin_discovery_msg_.name = "platooning_tactical_plugin";
+  plugin_discovery_msg_.name = "PlatooningTacticalPlugin";
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = true;
+  plugin_discovery_msg_.activated = false;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
   plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 }
@@ -95,9 +95,10 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
                                                                             config_.curvature_moving_average_window_size, config_.back_distance,
                                                                             config_.buffer_ending_downtrack,
                                                                             config_.desired_controller_plugin);
+  double controler_look_ahead_distance=20;
   
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
-                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config,controler_look_ahead_distance);
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
