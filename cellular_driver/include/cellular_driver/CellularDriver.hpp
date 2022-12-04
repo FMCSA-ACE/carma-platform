@@ -68,12 +68,14 @@ namespace cellular_driver
 
       rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
       rclcpp::Subscription<carma_v2x_msgs::msg::ADSSafety>::SharedPtr myHealthSubscription;
-      rclcpp::Subscription<carma_v2x_msgs::msg::FullPositionVector>::SharedPtr myPositionSubscription;
+      rclcpp::Subscription<gps_msgs::msg::GPSFix>::SharedPtr myPositionSubscription;
 
     protected:
 
       void handle_ads_health(const carma_v2x_msgs::msg::ADSSafety::SharedPtr);
-      void handle_position(const carma_v2x_msgs::msg::FullPositionVector::SharedPtr);
+      void handle_position(const gps_msgs::msg::GPSFix::SharedPtr);
+
+      double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 
       void respond(int, const char * );
 

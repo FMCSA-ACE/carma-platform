@@ -24,6 +24,10 @@
 
 #include "cellular_driver/CellularDriver.hpp"
 
+#include <math.h>
+#include <cmath> 
+#define earthRadiusKm 6371.0
+
 
 namespace cellular_driver
 {
@@ -134,50 +138,57 @@ namespace cellular_driver
 
     myHealthSubscription = 
       this->create_subscription<carma_v2x_msgs::msg::ADSSafety>(
-      "ads_health", 10, std::bind(&CellularDriver::handle_ads_health, this, _1));
-
+      "ads_safety_data", 10, std::bind(&CellularDriver::handle_ads_health, this, _1));
+    
     myPositionSubscription = 
-      this->create_subscription<carma_v2x_msgs::msg::FullPositionVector>(
-      "ace_position", 10, std::bind(&CellularDriver::handle_position, this, _1));
+      this->create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
+                                                          std::bind(&CellularDriver::handle_position, this, _1));
+
+
+    // myPositionSubscription = 
+    //   this->create_subscription<carma_v2x_msgs::msg::FullPositionVector>(
+    //   "ace_position", 10, std::bind(&CellularDriver::handle_position, this, _1));
   }
   
-  /*********************************************************************************/  
-  /* Method:    handle_position                                                    */
-  /* Purpose:   This method convects the GPS position message to JSON then         */
-  /*            transmits it.                                                      */
+  // /*********************************************************************************/  
+  // /* Method:    handle_position                                                    */
+  // /* Purpose:   This method convects the GPS position message to JSON then         */
+  // /*            transmits it.                                                      */
   /*********************************************************************************/  
   void CellularDriver::handle_position(
-     const carma_v2x_msgs::msg::FullPositionVector::SharedPtr msg)
+     const gps_msgs::msg::GPSFix::SharedPtr msg)
   {
-    string x;
-    StringBuffer buffer;
-    Writer<StringBuffer> writer(buffer);
+    const double prepass_lat = 37.187007;
+    const double prepass_lon = -80.394843;
+    double lat = msg.latitude;
+    double lon = msg.longitude;
 
-    writer.StartObject();
-    writer.Key("type");
-    writer.String("FullPositionVector");
-    writer.Key("data");
-    writer.StartObject();
-    writer.Key("VehicleIdentificationNumber");
-    writer.String("ABC");
-    writer.Key("presence_vector");
-    writer.Int(msg->presence_vector);
-    writer.Key("lon");
-    writer.Double(msg->lon);
-    writer.Key("lat");
-    writer.Double(msg->lat);
+    double distance = distanceEarth(prepass_lat, prepass_lon, lat, lon);
+    if (distance < 0.01){
+      string x;
+      StringBuffer buffer;
+      Writer<StringBuffer> writer(buffer);
 
-    writer.Key("elevation");
-    writer.Double(msg->elevation);
-    writer.Key("heading");
-    writer.Double(msg->heading);
-    writer.Key("speed");
-    writer.Double(msg->speed);
-    writer.EndObject();
-    writer.EndObject();
-    this -> respond(POSITION_MESSAGE, buffer.GetString());
+      writer.StartObject();
+      writer.Key("Geofence");
+      writer.Int(1);
+      writer.EndObject();
+      this -> respond(POSITION_MESSAGE, buffer.GetString());
+    }
   }
- 
+    
+  
+  double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
+    double lat1r, lon1r, lat2r, lon2r, u, v;
+    lat1r = (lat1d * M_PI / 180);
+    lon1r = (lon1d * M_PI / 180);
+    lat2r = (lat2d * M_PI / 180);
+    lon2r = (lon2d * M_PI / 180);
+    u = sin((lat2r - lat1r)/2);
+    v = sin((lon2r - lon1r)/2);
+    return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
+  }
+
   /*********************************************************************************/  
   /* Method:    handle_ads_health                                                  */
   /* Purpose:   This method convects the ADSSafety message to JSON then            */
@@ -190,36 +201,65 @@ namespace cellular_driver
      StringBuffer buffer;
      Writer<StringBuffer> writer(buffer);
 
-std::cerr << "got ads_data from wayne truck\n";
+std::cerr << "got ads_data from truck\n";
      writer.StartObject();
      writer.Key("type");
      writer.String("ADSSafety");
      writer.Key("data");
      writer.StartObject();
-     writer.Key("Vin");
-     x = msg->vin_number;
-     writer.String(x.c_str());
 
-std::cerr << "got ads_data from wayne truck 1\n";
-     writer.Key("Plate");
+     writer.Key("pre_trip_inspector");
+     writer.String((msg->pre_trip_inspector).c_str());
+     writer.Key("inspector_id");
+     writer.String((msg->inspector_id).c_str());
+     writer.Key("vehicle");
+     writer.String((msg->vehicle).c_str());
+     writer.Key("vin_number");
+     writer.String((msg->vin_number).c_str());
+     writer.Key("license_plate");
      writer.String((msg->license_plate).c_str());
+     writer.Key("state");
+     writer.String((msg->state).c_str());
      writer.Key("carrier_name");
      writer.String((msg->carrier_name).c_str());
-     writer.Key("veh_insurance_status");
-     writer.String((msg->veh_insurance_status).c_str());
-     writer.Key("operator_name");
-     writer.String((msg->operator_name).c_str());
-     writer.Key("operator_contact_info");
-     writer.String((msg->operator_contact_info).c_str());
+     writer.Key("carrier_id");
+     writer.String((msg->carrier_id).c_str());
+     writer.Key("usdot_number");
+     writer.String((msg->usdot_number).c_str());
      writer.Key("gross_axle_weight");
-     writer.Double(msg->gross_axle_weight);
+     writer.String((msg->gross_axle_weight).c_str());
      writer.Key("gross_veh_weight");
-     writer.Double(msg->gross_veh_weight);
+     writer.String((msg->gross_veh_weight).c_str());
+     writer.Key("overweight_permit_status");
+     writer.String((msg->overweight_permit_status).c_str());
+     writer.Key("date_of_last_inspection");
+     writer.String((msg->date_of_last_inspection).c_str());
      writer.Key("date_of_pre_trip_inspection_tractor");
-     writer.String((msg->date_of_pre_trip_inspection_tractor).c_str());
+     writer.Double(msg->date_of_pre_trip_inspection_tractor);
      writer.Key("date_of_pre_trip_inspection_trailer");
-     writer.String((msg->date_of_pre_trip_inspection_trailer).c_str());
-std::cerr << "got ads_data from wayne truck 2\n";
+     writer.Double(msg->date_of_pre_trip_inspection_trailer);
+     writer.Key("iss_score");
+     writer.String((msg->iss_score).c_str());
+     writer.Key("ifta_status");
+     writer.String((msg->ifta_status).c_str());
+     writer.Key("irp_status");
+     writer.String((msg->irp_status).c_str());
+     writer.Key("ifta_status");
+     writer.String((msg->ifta_status).c_str());
+     writer.Key("truck_operational_health");
+     writer.String((msg->truck_operational_health).c_str());
+     writer.Key("tractor_operational_health");
+     writer.String((msg->tractor_operational_health).c_str());
+     writer.Key("trailer_operational_health");
+     writer.String((msg->trailer_operational_health).c_str());
+     writer.Key("level_of_inspection");
+     writer.String((msg->level_of_inspection).c_str());
+     writer.Key("origin");
+     writer.String((msg->origin).c_str());
+     writer.Key("destination");
+     writer.String((msg->destination).c_str());
+     writer.Key("nearest_roadside_inspection_facility");
+     writer.String((msg->nearest_roadside_inspection_facility).c_str());
 /*
      writer.Key("tire_data");
      writer.StartObject();
@@ -246,22 +286,6 @@ std::cerr << "got ads_data from wayne truck 2\n";
        writer.Key("ads_health_status");
        writer.Bool(msg->ads_status.ads_health_status);
      writer.EndObject();
-std::cerr << "got ads_data from wayne truck 3\n";
-
-     writer.Key("truck_operational_status");
-std::cerr << "truck operational status = " << (msg->truck_operational_status).c_str() << "\n";
-     writer.String((msg->truck_operational_status).c_str());
-     writer.Key("abs_warning");
-     writer.Bool(msg->abs_warning);
-
-std::cerr << "got ads_data from wayne truck 4\n";
-     writer.Key("destination");
-     writer.String((msg->destination).c_str());
-     writer.Key("roadside_inspection_facility");
-     writer.String((msg->roadside_inspection_facility).c_str());
-     writer.Key("level_of_inspection");
-     writer.Int(msg->level_of_inspection);
-std::cerr << "got ads_data from wayne truck 5\n";
 
      writer.EndObject();
      writer.EndObject();
