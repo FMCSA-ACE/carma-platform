@@ -11,26 +11,6 @@ import yaml
 
 
 def generate_launch_description():
-    # ld = LaunchDescription()
-
-    # config = os.path.join(
-    #     get_package_share_directory('cellular_driver'),
-    #     'config',
-    #     'parameters.yaml'
-    #     )
-
-    # with open(config, 'r') as f:
-    #     params = yaml.safe_load(f)['cellular_driver']['ros_parameters']
-        
-    # node=Node(
-    #     package = 'cellular_driver',
-    #     name = 'your_amazing_node',
-    #     executable = 'cellular_driver',
-    #     parameters = [params]
-    # )
-    # ld.add_action(node)
-    # return ld
-
 # Declare the log_level launch argument
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
