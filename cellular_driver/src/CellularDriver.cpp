@@ -144,10 +144,6 @@ namespace cellular_driver
       this->create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
                                                           std::bind(&CellularDriver::handle_position, this, _1));
 
-
-    // myPositionSubscription = 
-    //   this->create_subscription<carma_v2x_msgs::msg::FullPositionVector>(
-    //   "ace_position", 10, std::bind(&CellularDriver::handle_position, this, _1));
   }
   
   // /*********************************************************************************/  
@@ -214,7 +210,7 @@ std::cerr << "got ads_data from truck\n";
      writer.String((msg->inspector_id).c_str());
      writer.Key("vehicle");
      writer.String((msg->vehicle).c_str());
-     writer.Key("vin_number");
+     writer.Key("vin");
      writer.String((msg->vin_number).c_str());
      writer.Key("license_plate");
      writer.String((msg->license_plate).c_str());
@@ -246,7 +242,7 @@ std::cerr << "got ads_data from truck\n";
      writer.String((msg->irp_status).c_str());
      writer.Key("ifta_status");
      writer.String((msg->ifta_status).c_str());
-     writer.Key("truck_operational_health");
+     writer.Key("truck_operational_status");
      writer.String((msg->truck_operational_health).c_str());
      writer.Key("tractor_operational_health");
      writer.String((msg->tractor_operational_health).c_str());

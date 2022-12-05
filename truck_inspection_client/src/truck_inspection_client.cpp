@@ -155,14 +155,17 @@ namespace truck_inspection_client
     {
         cav_msgs::ADSSafety ads_health_msg;
 
-        long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
-        ads_health_msg.type = "ADS Health and Status";
-        ads_health_msg.m_header.timestamp = time;
-        ads_health_msg.vin_number = vin_number_;
-        ads_health_msg.license_plate = license_plate_;
-        ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
-        ads_health_msg.operational_time = operational_time_;
-        ads_safety_pub_.publish(ads_health_msg);
+        if (msg->type == "GET_ADS_HEALTH"){
+            long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+            ads_health_msg.type = "ADS Health and Status";
+            ads_health_msg.m_header.timestamp = time;
+            ads_health_msg.vin_number = vin_number_;
+            ads_health_msg.license_plate = license_plate_;
+            ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+            ads_health_msg.operational_time = operational_time_;
+            ads_health_msg.truck_operational_health = truck_operational_health_;
+            ads_safety_pub_.publish(ads_health_msg);
+        }
     }
     // ADS PreTrip data request callback
     void TruckInspectionClient::adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg)
