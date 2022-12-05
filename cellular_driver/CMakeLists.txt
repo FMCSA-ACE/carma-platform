@@ -1,95 +1,45 @@
 cmake_minimum_required(VERSION 3.5)
 project(cellular_driver)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+# Declare carma package and check ROS version
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(2)
+carma_package()
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+# Name build targets
+set(node_exec cellular_driver_node_exec)
+set(node_lib cellular_driver_node_lib)
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_components REQUIRED)
-
-find_package(std_msgs REQUIRED)
-find_package(cav_msgs REQUIRED)
-find_package(carma_v2x_msgs REQUIRED)
-
-set(pluins_dependencies
-  pluginlib
+# Includes
+include_directories(
+  include
 )
 
-set(node_dependencies
-   ${plugin_dependencies}
-   rclcpp
-   rclcpp_components
-   rcutils
-   std_msgs
-   cav_msgs
-   carma_v2x_msgs
+
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/CellularDriver.cpp
+        src/easywsclient.cpp
 )
 
-link_directories(/workspaces/carma_ws/src/fmcsa-ace/curlpp)
-
-
-add_executable( ${PROJECT_NAME}
-  src/main.cpp
-  src/CellularDriver.cpp
-  src/easywsclient.cpp
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-ament_target_dependencies( ${PROJECT_NAME} ${node_dependencies})
+# Register component
+rclcpp_components_register_nodes(${node_lib} "cellular_driver::CellularDriver")
 
-
-target_include_directories(cellular_driver PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-   /opt/ros/foxy/include
-   /workspaces/carma_ws/src/fmcsa-ace/rapidjson
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-ament_target_dependencies(
-  cellular_driver
-  carma_v2x_msgs
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
 )
-
-#install(TARGETS cellular_driver
-  #DESTINATION lib/${PROJECT_NAME})
-
-install(
-  DIRECTORY config/
-  DESTINATION share/${PROJECT_NAME}/config
-)
-
-install(
-  DIRECTORY launch/
-  DESTINATION share/${PROJECT_NAME}/launch
-)
-install(TARGETS
-   cellular_driver
-   DESTINATION lib/${PROJECT_NAME}
-)
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
-ament_package()
- 
