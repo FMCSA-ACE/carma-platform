@@ -62,7 +62,7 @@ namespace cellular_driver
       map<int, WebSocket::pointer> myMessageQueue;
       map<WebSocket::pointer, string> mySocketMapping;
 
-      rclcpp::Publisher<std_msgs::msg::String>::SharedPtr myPrepassPublisher;
+      rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr myPrepassPublisher;
       rclcpp::Publisher<std_msgs::msg::String>::SharedPtr myHealthRequestPublisher;
       rclcpp::Publisher<carma_v2x_msgs::msg::TirePressureMonitoringSystem>::SharedPtr myTPMSPublisher;
 

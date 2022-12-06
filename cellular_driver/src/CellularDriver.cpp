@@ -132,7 +132,7 @@ namespace cellular_driver
     }
 
     myPrepassPublisher = 
-        this->create_publisher<std_msgs::msg::String>("prepass_decision",10);
+        this->create_publisher<std_msgs::msg::Bool>("prepass_decision",10);
     myHealthRequestPublisher = 
         this->create_publisher<std_msgs::msg::String>("ads_health_request",10);
 
@@ -208,7 +208,7 @@ std::cerr << "got ads_data from truck\n";
      writer.String((msg->pre_trip_inspector).c_str());
      writer.Key("inspector_id");
      writer.String((msg->inspector_id).c_str());
-     writer.Key("vehicle");
+     writer.Key("vehicle"); 
      writer.String((msg->vehicle).c_str());
      writer.Key("vin");
      writer.String((msg->vin_number).c_str());
@@ -351,9 +351,13 @@ std::cerr << "got ads_data from truck\n";
   /*********************************************************************************/  
   void CellularDriver::updatePrepass(const char *decision)
   {
-    std_msgs::msg::String message;
+    std_msgs::msg::Bool message;
 
-    message.data = decision;
+    if (decision == "Pullin"){
+      message.data = true;
+    } else {
+      message.data = false;
+    }
     myPrepassPublisher -> publish(message); 
   }
   

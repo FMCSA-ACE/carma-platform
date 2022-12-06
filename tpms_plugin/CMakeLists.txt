@@ -1,21 +1,25 @@
 cmake_minimum_required(VERSION 3.5)
 project(tpms_plugin)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+# Declare carma package and check ROS version
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(2)
+carma_package()
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+# Name build targets
+set(node_exec tpms_plugin_node_exec)
+set(node_lib tpms_plugin__node_lib)
 
-add_compile_options(-std=gnu++11 -D_GLIBCXX_USE_ABI=0 -I/workspaces/carma_ws/src/ests_plugins/curlpp/include)
+# Includes
+include_directories(
+  include
+)
+
+add_compile_options(-std=gnu++11 -D_GLIBCXX_USE_ABI=0 -I/ads_ws/src/carma_platform/curlpp/include)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
