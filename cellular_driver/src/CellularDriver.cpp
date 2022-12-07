@@ -301,8 +301,6 @@ std::cerr << "got ads_data from truck\n";
     std::string type;
     std_msgs::msg::String message;
     
-
-    type = "GET_ADS_HEALTH";
     message.data = "GET_ADS_HEALTH";
     myHealthRequestPublisher->publish(message);
     

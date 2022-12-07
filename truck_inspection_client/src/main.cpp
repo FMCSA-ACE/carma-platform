@@ -23,4 +23,4 @@ int main(int argc, char** argv)
     truck_inspection_client::TruckInspectionClient client;
     client.run();
     return 0;
-};
+}

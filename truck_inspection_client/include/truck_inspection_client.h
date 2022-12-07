@@ -61,6 +61,7 @@ namespace truck_inspection_client
         ros::Subscriber bsm_sub_;
         // subscriber for ADS health and safety project
         ros::Subscriber ads_health_request_sub_;
+        ros::Subscriber ads_pretrip_request_sub_;
 
         // initialize this node
         void initialize();
@@ -74,12 +75,12 @@ namespace truck_inspection_client
         void adsHealthRequestCallback(const std_msgs::StringConstPtr& msg);
         void adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg);
         
-        cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type);
+        cav_msgs::ADSStatus adsHealthStatus(const std::string& ads_system_alert_type);
 
         // truck info
         std::string vin_number_;
         std::string license_plate_;
-        std::string usdot_number_;
+        int usdot_number_;
         std::string state_short_name_;
         std::string carrier_name_;
         std::string carrier_id_;
@@ -121,8 +122,8 @@ namespace truck_inspection_client
         std::string preclearance_system_;
         std::string operational_time_;
 
-        double current_lat_;
-        double current_lon_;
+        double current_lat_ = 0;
+        double current_lon_ = 0;
     };
 
 }

@@ -120,8 +120,8 @@ namespace truck_inspection_client
         bsm_id_ = "";
         for(auto c : id_vector) bsm_id_ += std::to_string(c);
 
-        current_lat_ = core_data.latitude;
-        current_lon_ = core_data.longitude;
+        current_lat_ = msg->core_data.latitude;
+        current_lon_ = msg->core_data.longitude;
     }
 
     void TruckInspectionClient::guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg)
@@ -130,7 +130,7 @@ namespace truck_inspection_client
     }
     void TruckInspectionClient::systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg){
         this->ads_system_alert_type_ = std::to_string(msg->type);
-        this->driver_status_= std::to_string(msg->driver_status);
+        this->driver_status_= msg->driver_status;
     }
     void TruckInspectionClient::requestCallback(const cav_msgs::MobilityRequestConstPtr& msg)
     {
@@ -157,11 +157,11 @@ namespace truck_inspection_client
     {
         cav_msgs::ADSSafety ads_health_msg;
 
-        if (msg->type == "GET_ADS_HEALTH"){
+        if (msg->data == "GET_ADS_HEALTH"){
             long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
             ads_health_msg.type = "ADS Health and Status";
             ads_health_msg.m_header.timestamp = time;
-            ads_health_msg.vin_number = vin_number_;
+            ads_health_msg.vin = vin_number_;
             ads_health_msg.license_plate = license_plate_;
             ads_health_msg.latitude = current_lat_;
             ads_health_msg.longitude = current_lon_;
@@ -180,8 +180,8 @@ namespace truck_inspection_client
         long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
         ads_pretrip_msg.m_header.timestamp = time;
         ads_pretrip_msg.type = "Pretripinput";
-        ads_health_msg.latitude = current_lat_;
-        ads_health_msg.longitude = current_lon_;
+        ads_pretrip_msg.latitude = current_lat_;
+        ads_pretrip_msg.longitude = current_lon_;
         ads_pretrip_msg.pre_trip_inspector = pre_trip_inspector_;
         ads_pretrip_msg.inspector_id = inspector_id_;
         ads_pretrip_msg.vehicle = vehicle_;
@@ -212,40 +212,31 @@ namespace truck_inspection_client
         ads_safety_pub_.publish(ads_pretrip_msg);
     }
 
-    cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(string ads_system_alert_type)
+    cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(const std::string& ads_system_alert_type)
     {
         cav_msgs::ADSStatus ads_status;
-        switch(ads_system_alert_type)
-        {
-            case std::to_string(cav_msgs::SystemAlert::CAUTION):
-                ads_status.ads_health_status_ = "yellow";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_CAUTION;
-                break;
-            case std::to_string(cav_msgs::SystemAlert::WARNING):
-                ads_status.ads_health_status_ = "yellow";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_WARNING;
-                break;
-            case std::to_string(cav_msgs::SystemAlert::FATAL):
-                ads_status.ads_health_status_ = "red";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
-                break;
-            case std::to_string(cav_msgs::SystemAlert::NOT_READY):
-                ads_status.ads_health_status_ = "yellow";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_NOT_READY;
-                break;
-            case std::to_string(cav_msgs::SystemAlert::DRIVERS_READY):
-                ads_status.ads_health_status_ = "green";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_READY;
-                break;
-            case std::to_string(cav_msgs::SystemAlert::SHUTDOWN):
-                ads_status.ads_health_status_ = "red";
-                ads_status.ads_operational_status_ = cav_msgs::ADSStatus::ADS_FATAL;
-                break;
-            default:
-                break;
-        }
-        ads_status.driver_status = driver_status_;
+
+        if (ads_system_alert_type == "1"){
+            ads_status.ads_health_status = "yellow";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_CAUTION;
+        } else if (ads_system_alert_type == "2"){
+            ads_status.ads_health_status = "yellow";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_WARNING;
+        } else if (ads_system_alert_type == "3"){
+            ads_status.ads_health_status = "red";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_FATAL;
+        } else if (ads_system_alert_type == "4"){
+            ads_status.ads_health_status = "yellow";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_NOT_READY;
+        } else if (ads_system_alert_type == "5"){
+            ads_status.ads_health_status = "green";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_READY;
+        } else if (ads_system_alert_type == "6"){
+            ads_status.ads_health_status = "red";
+            ads_status.ads_operational_status = cav_msgs::ADSStatus::ADS_FATAL;
+        } 
         
+        ads_status.driver_status = driver_status_;
         return ads_status;
     }
 
