@@ -197,16 +197,6 @@ namespace cellular_driver
      StringBuffer buffer;
      Writer<StringBuffer> writer(buffer);
 
-                 ads_health_msg.type = "ADS Health and Status";
-            ads_health_msg.m_header.timestamp = time;
-            ads_health_msg.vin_number = vin_number_;
-            ads_health_msg.license_plate = license_plate_;
-            ads_health_msg.latitude = current_lat_;
-            ads_health_msg.longitude = current_lon_;
-            ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
-            ads_health_msg.operational_time = operational_time_;
-            ads_health_msg.truck_operational_health = truck_operational_health_;
-
 std::cerr << "got ads_data from truck\n";
      writer.StartObject();
      writer.Key("type");
