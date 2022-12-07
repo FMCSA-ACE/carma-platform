@@ -5,8 +5,8 @@
 
 #include <cellular_driver/easywsclient.hpp>
 
-#include "../../../rapidjson/document.h"
-#include "../../../rapidjson/prettywriter.h"
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
 using std::placeholders::_1;
 

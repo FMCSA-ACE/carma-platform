@@ -33,13 +33,13 @@
 
 #include <cellular_driver/easywsclient.hpp>
 
-#include "../../../rapidjson/document.h"
-#include "../../../rapidjson/prettywriter.h"
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
 using std::placeholders::_1;
 
 #define PREPASS_URL "ws://192.168.1.71:8080/PrePass/PrePassDecision"
-#define SAFE_SPECT_URL "ws://192.168.1.71:8080/SafeSpect/SafeSpect"
+// #define SAFE_SPECT_URL "ws://192.168.1.71:8080/SafeSpect/SafeSpect"
 
 #define POSITION_MESSAGE 1
 #define ADS_HEALTH_REQUESTED 2

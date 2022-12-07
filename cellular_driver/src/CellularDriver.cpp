@@ -197,6 +197,16 @@ namespace cellular_driver
      StringBuffer buffer;
      Writer<StringBuffer> writer(buffer);
 
+                 ads_health_msg.type = "ADS Health and Status";
+            ads_health_msg.m_header.timestamp = time;
+            ads_health_msg.vin_number = vin_number_;
+            ads_health_msg.license_plate = license_plate_;
+            ads_health_msg.latitude = current_lat_;
+            ads_health_msg.longitude = current_lon_;
+            ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+            ads_health_msg.operational_time = operational_time_;
+            ads_health_msg.truck_operational_health = truck_operational_health_;
+
 std::cerr << "got ads_data from truck\n";
      writer.StartObject();
      writer.Key("type");
@@ -204,8 +214,8 @@ std::cerr << "got ads_data from truck\n";
      writer.Key("data");
      writer.StartObject();
 
-     writer.Key("pre_trip_inspector");
-     writer.String((msg->pre_trip_inspector).c_str());
+     writer.Key("data time");
+     writer.String((msg->m_header.timestamp).c_str());
      writer.Key("inspector_id");
      writer.String((msg->inspector_id).c_str());
      writer.Key("vehicle"); 
@@ -214,48 +224,14 @@ std::cerr << "got ads_data from truck\n";
      writer.String((msg->vin_number).c_str());
      writer.Key("license_plate");
      writer.String((msg->license_plate).c_str());
-     writer.Key("state");
-     writer.String((msg->state).c_str());
-     writer.Key("carrier_name");
-     writer.String((msg->carrier_name).c_str());
-     writer.Key("carrier_id");
-     writer.String((msg->carrier_id).c_str());
-     writer.Key("usdot_number");
-     writer.String((msg->usdot_number).c_str());
-     writer.Key("gross_axle_weight");
-     writer.String((msg->gross_axle_weight).c_str());
-     writer.Key("gross_veh_weight");
-     writer.String((msg->gross_veh_weight).c_str());
-     writer.Key("overweight_permit_status");
-     writer.String((msg->overweight_permit_status).c_str());
-     writer.Key("date_of_last_inspection");
-     writer.String((msg->date_of_last_inspection).c_str());
-     writer.Key("date_of_pre_trip_inspection_tractor");
-     writer.Double(msg->date_of_pre_trip_inspection_tractor);
-     writer.Key("date_of_pre_trip_inspection_trailer");
-     writer.Double(msg->date_of_pre_trip_inspection_trailer);
-     writer.Key("iss_score");
-     writer.String((msg->iss_score).c_str());
-     writer.Key("ifta_status");
-     writer.String((msg->ifta_status).c_str());
-     writer.Key("irp_status");
-     writer.String((msg->irp_status).c_str());
-     writer.Key("ifta_status");
-     writer.String((msg->ifta_status).c_str());
+     writer.Key("latitude");
+     writer.String((msg->latitude).c_str());
+     writer.Key("longitude");
+     writer.String((msg->longitude).c_str());
      writer.Key("truck_operational_status");
      writer.String((msg->truck_operational_health).c_str());
-     writer.Key("tractor_operational_health");
-     writer.String((msg->tractor_operational_health).c_str());
-     writer.Key("trailer_operational_health");
-     writer.String((msg->trailer_operational_health).c_str());
-     writer.Key("level_of_inspection");
-     writer.String((msg->level_of_inspection).c_str());
-     writer.Key("origin");
-     writer.String((msg->origin).c_str());
-     writer.Key("destination");
-     writer.String((msg->destination).c_str());
-     writer.Key("nearest_roadside_inspection_facility");
-     writer.String((msg->nearest_roadside_inspection_facility).c_str());
+     writer.Key("operational time");
+     writer.String((msg->operational_time).c_str());
 /*
      writer.Key("tire_data");
      writer.StartObject();
@@ -354,9 +330,9 @@ std::cerr << "got ads_data from truck\n";
     std_msgs::msg::Bool message;
 
     if (decision == "Pullin"){
-      message.data = true;
-    } else {
       message.data = false;
+    } else {
+      message.data = true;
     }
     myPrepassPublisher -> publish(message); 
   }
