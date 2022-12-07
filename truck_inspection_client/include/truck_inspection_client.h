@@ -120,6 +120,9 @@ namespace truck_inspection_client
         std::string nearest_roadside_inspection_facility_;
         std::string preclearance_system_;
         std::string operational_time_;
+
+        double current_lat_;
+        double current_lon_;
     };
 
 }

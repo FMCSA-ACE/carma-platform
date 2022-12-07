@@ -120,6 +120,8 @@ namespace truck_inspection_client
         bsm_id_ = "";
         for(auto c : id_vector) bsm_id_ += std::to_string(c);
 
+        current_lat_ = core_data.latitude;
+        current_lon_ = core_data.longitude;
     }
 
     void TruckInspectionClient::guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg)
@@ -161,6 +163,8 @@ namespace truck_inspection_client
             ads_health_msg.m_header.timestamp = time;
             ads_health_msg.vin_number = vin_number_;
             ads_health_msg.license_plate = license_plate_;
+            ads_health_msg.latitude = current_lat_;
+            ads_health_msg.longitude = current_lon_;
             ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
             ads_health_msg.operational_time = operational_time_;
             ads_health_msg.truck_operational_health = truck_operational_health_;
@@ -176,6 +180,8 @@ namespace truck_inspection_client
         long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
         ads_pretrip_msg.m_header.timestamp = time;
         ads_pretrip_msg.type = "Pretripinput";
+        ads_health_msg.latitude = current_lat_;
+        ads_health_msg.longitude = current_lon_;
         ads_pretrip_msg.pre_trip_inspector = pre_trip_inspector_;
         ads_pretrip_msg.inspector_id = inspector_id_;
         ads_pretrip_msg.vehicle = vehicle_;
