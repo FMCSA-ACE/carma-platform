@@ -27,14 +27,12 @@
 #include <string.h>
 #include "rclcpp/rclcpp.hpp"
 #include <std_msgs/msg/string.hpp>
-#include <carma_v2x_msgs/msg/ADSSafety.hpp>
-#include <carma_v2x_msgs/msg/FullPositionVector.hpp>
-#include <carma_v2x_msgs/msg/TirePressureMonitoringSystem.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <gps_msgs/msg/gps_fix.hpp>
+#include <carma_v2x_msgs/msg/ads_safety.hpp>
+#include <carma_v2x_msgs/msg/tire_pressure_monitoring_system.hpp>
 
 #include <cellular_driver/easywsclient.hpp>
-
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
 
 using std::placeholders::_1;
 
@@ -46,8 +44,6 @@ using std::placeholders::_1;
 
 using namespace std;
 using namespace rclcpp;
-using namespace rapidjson;
-using namespace easywsclient;
 
 namespace cellular_driver
 {
@@ -55,25 +51,25 @@ namespace cellular_driver
   {
     private:
 
-      WebSocket::pointer myPrepassConnection;
-      WebSocket::pointer mySafeSpectConnection;
+      WebSocket::pointer myPrepassConnection_;
+      WebSocket::pointer mySafeSpectConnection_;
 
-      vector<WebSocket::pointer> myConnections;
-      map<int, WebSocket::pointer> myMessageQueue;
-      map<WebSocket::pointer, string> mySocketMapping;
+      vector<WebSocket::pointer> myConnections_;
+      map<int, WebSocket::pointer> myMessageQueue_;
+      map<WebSocket::pointer, string> mySocketMapping_;
 
-      rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr myPrepassPublisher;
-      rclcpp::Publisher<std_msgs::msg::String>::SharedPtr myHealthRequestPublisher;
-      rclcpp::Publisher<carma_v2x_msgs::msg::TirePressureMonitoringSystem>::SharedPtr myTPMSPublisher;
+      rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr myPrepassPublisher_;
+      rclcpp::Publisher<std_msgs::msg::String>::SharedPtr myHealthRequestPublisher_;
+      // rclcpp::Publisher<carma_v2x_msgs::msg::TirePressureMonitoringSystem>::SharedPtr myTPMSPublisher_;
 
       rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
-      rclcpp::Subscription<carma_v2x_msgs::msg::ADSSafety>::SharedPtr myHealthSubscription;
-      rclcpp::Subscription<gps_msgs::msg::GPSFix>::SharedPtr myPositionSubscription;
+      rclcpp::Subscription<carma_v2x_msgs::msg::ADSSafety>::SharedPtr myHealthSubscription_;
+      rclcpp::Subscription<gps_msgs::msg::GPSFix>::SharedPtr myPositionSubscription_;
 
     protected:
 
-      void handle_ads_health(const carma_v2x_msgs::msg::ADSSafety::SharedPtr);
-      void handle_position(const gps_msgs::msg::GPSFix::SharedPtr);
+      void handle_ads_health(const carma_v2x_msgs::msg::ADSSafety::SharedPtr msg);
+      void handle_position(const gps_msgs::msg::GPSFix::SharedPtr msg);
 
       double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 

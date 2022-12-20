@@ -23,31 +23,34 @@
 
 
 #include "cellular_driver/CellularDriver.hpp"
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
 #include <math.h>
 #include <cmath> 
 #define earthRadiusKm 6371.0
 
+using namespace rapidjson;
 
 namespace cellular_driver
 {
   CellularDriver::CellularDriver():Node("cellular_driver")
   {
-    myPrepassConnection = NULL;
-    mySafeSpectConnection = NULL;
+    myPrepassConnection_ = NULL;
+    mySafeSpectConnection_ = NULL;
     this -> declare_parameter("connection_strings"); 
   }
 
   CellularDriver::~CellularDriver()
   {
-    if (mySafeSpectConnection != NULL)
+    if (mySafeSpectConnection_ != NULL)
     {
-       delete mySafeSpectConnection;
+       delete mySafeSpectConnection_;
     }
     
-    if (myPrepassConnection != NULL)
+    if (myPrepassConnection_ != NULL)
     {
-      delete myPrepassConnection;
+      delete myPrepassConnection_;
     }
   }
   
@@ -70,15 +73,15 @@ namespace cellular_driver
     string url;
     WsHandler *handler;
 
-    for (WebSocket::pointer ws : myConnections)
+    for (WebSocket::pointer ws : myConnections_)
     {
       if (ws->getReadyState() != WebSocket::OPEN)
       {
         WebSocket::pointer dummy;
 
         dummy = WebSocket::create_dummy();
-        url = mySocketMapping[ws];
-        mySocketMapping.erase(ws);
+        url = mySocketMapping_[ws];
+        mySocketMapping_.erase(ws);
         ws = WebSocket::from_url(url);
         if (ws == NULL)
         {
@@ -88,7 +91,7 @@ namespace cellular_driver
             ws = dummy;
           }
         }
-        mySocketMapping.insert(pair<WebSocket::pointer, string>(ws,url));
+        mySocketMapping_.insert(pair<WebSocket::pointer, string>(ws,url));
       }
       if (ws -> getReadyState() == WebSocket::OPEN)
       {
@@ -127,20 +130,20 @@ namespace cellular_driver
       {
         ws = WebSocket::create_dummy();
       }
-      myConnections.push_back(ws);
-      mySocketMapping.insert(pair<WebSocket::pointer, string>(ws,url));
+      myConnections_.push_back(ws);
+      mySocketMapping_.insert(pair<WebSocket::pointer, string>(ws,url));
     }
 
-    myPrepassPublisher = 
+    myPrepassPublisher_ = 
         this->create_publisher<std_msgs::msg::Bool>("prepass_decision",10);
-    myHealthRequestPublisher = 
+    myHealthRequestPublisher_ = 
         this->create_publisher<std_msgs::msg::String>("ads_health_request",10);
 
-    myHealthSubscription = 
+    myHealthSubscription_ = 
       this->create_subscription<carma_v2x_msgs::msg::ADSSafety>(
       "ads_safety_data", 10, std::bind(&CellularDriver::handle_ads_health, this, _1));
     
-    myPositionSubscription = 
+    myPositionSubscription_ = 
       this->create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
                                                           std::bind(&CellularDriver::handle_position, this, _1));
 
@@ -156,8 +159,8 @@ namespace cellular_driver
   {
     const double prepass_lat = 37.187007;
     const double prepass_lon = -80.394843;
-    double lat = msg.latitude;
-    double lon = msg.longitude;
+    double lat = msg->latitude;
+    double lon = msg->longitude;
 
     double distance = distanceEarth(prepass_lat, prepass_lon, lat, lon);
     if (distance < 0.01){
@@ -192,7 +195,7 @@ namespace cellular_driver
   /*********************************************************************************/  
   void CellularDriver::handle_ads_health(const carma_v2x_msgs::msg::ADSSafety::SharedPtr msg)
   {
-     int i;
+    //  int i;
      string x;
      StringBuffer buffer;
      Writer<StringBuffer> writer(buffer);
@@ -205,19 +208,19 @@ std::cerr << "got ads_data from truck\n";
      writer.StartObject();
 
      writer.Key("data time");
-     writer.String((msg->m_header.timestamp).c_str());
+     writer.String(std::to_string(msg->m_header.timestamp));
      writer.Key("inspector_id");
      writer.String((msg->inspector_id).c_str());
      writer.Key("vehicle"); 
      writer.String((msg->vehicle).c_str());
      writer.Key("vin");
-     writer.String((msg->vin_number).c_str());
+     writer.String((msg->vin).c_str());
      writer.Key("license_plate");
      writer.String((msg->license_plate).c_str());
      writer.Key("latitude");
-     writer.String((msg->latitude).c_str());
+     writer.String(std::to_string(msg->latitude));
      writer.Key("longitude");
-     writer.String((msg->longitude).c_str());
+     writer.String(std::to_string(msg->longitude));
      writer.Key("truck_operational_status");
      writer.String((msg->truck_operational_health).c_str());
      writer.Key("operational time");
@@ -246,7 +249,7 @@ std::cerr << "got ads_data from truck\n";
      writer.Key("ads_status");
      writer.StartObject();
        writer.Key("ads_health_status");
-       writer.Bool(msg->ads_status.ads_health_status);
+       writer.String(msg->ads_status.ads_health_status);
      writer.EndObject();
 
      writer.EndObject();
@@ -259,7 +262,7 @@ std::cerr << "got ads_data from truck\n";
   /*********************************************************************************/  
   /* Method:    respond                                                            */
   /* Purpose:   This method transmits a message to the socket upon which the       */
-  /*            request was received.  The vector myMessageQueue maintains this    */
+  /*            request was received.  The vector myMessageQueue_ maintains this    */
   /*            mapping.  In the case of a GPS position message, it is broadcast   */ 
   /*            to all sockets.                                                   */
   /*********************************************************************************/  
@@ -268,12 +271,12 @@ std::cerr << "got ads_data from truck\n";
     if (type != POSITION_MESSAGE)
     {
       map<int,WebSocket::pointer>::iterator iter;
-      for(iter=myMessageQueue.begin(); iter != myMessageQueue.end(); )
+      for(iter=myMessageQueue_.begin(); iter != myMessageQueue_.end(); )
       {
         if (iter -> first == type)
         {
           iter -> second -> send(message);
-          myMessageQueue.erase(iter++);
+          myMessageQueue_.erase(iter++);
         } 
         else
         {
@@ -283,7 +286,7 @@ std::cerr << "got ads_data from truck\n";
     }
     else
     {
-      for (WebSocket::pointer x : myConnections)
+      for (WebSocket::pointer x : myConnections_)
       {
         x -> send(message);
       }
@@ -302,9 +305,9 @@ std::cerr << "got ads_data from truck\n";
     std_msgs::msg::String message;
     
     message.data = "GET_ADS_HEALTH";
-    myHealthRequestPublisher->publish(message);
+    myHealthRequestPublisher_->publish(message);
     
-    myMessageQueue.insert(pair<int, WebSocket *>(ADS_HEALTH_REQUESTED, socket));
+    myMessageQueue_.insert(pair<int, WebSocket *>(ADS_HEALTH_REQUESTED, socket));
   }
  
   /*********************************************************************************/  
@@ -322,7 +325,7 @@ std::cerr << "got ads_data from truck\n";
     } else {
       message.data = true;
     }
-    myPrepassPublisher -> publish(message); 
+    myPrepassPublisher_ -> publish(message); 
   }
   
   /*********************************************************************************/  

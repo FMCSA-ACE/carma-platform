@@ -19,7 +19,6 @@ include_directories(
   include
 )
 
-
 # Build
 ament_auto_add_library(${node_lib} SHARED
         src/CellularDriver.cpp
@@ -31,7 +30,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "cellular_driver::CellularDriver")
+# rclcpp_components_register_nodes(${node_lib} "cellular_driver::CellularDriver")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
