@@ -59,9 +59,9 @@ namespace truck_inspection_client
         ros::Subscriber ads_system_alert_sub_;
         ros::Subscriber version_sub_;
         ros::Subscriber bsm_sub_;
-        // subscriber for ADS health and safety project
-        ros::Subscriber ads_health_request_sub_;
-        ros::Subscriber ads_pretrip_request_sub_;
+        // // subscriber for ADS health and safety project
+        // ros::Subscriber ads_health_request_sub_;
+        // ros::Subscriber ads_pretrip_request_sub_;
 
         // initialize this node
         void initialize();
@@ -72,8 +72,8 @@ namespace truck_inspection_client
         void systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg);
         void versionCallback(const std_msgs::StringConstPtr& msg);
         void bsmCallback(const cav_msgs::BSMConstPtr& msg);
-        void adsHealthRequestCallback(const std_msgs::StringConstPtr& msg);
-        void adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg);
+        // void adsHealthRequestCallback(const std_msgs::StringConstPtr& msg);
+        // void adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg);
         
         cav_msgs::ADSStatus adsHealthStatus(const std::string& ads_system_alert_type);
 

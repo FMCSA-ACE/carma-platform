@@ -64,16 +64,16 @@ namespace truck_inspection_client
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
         version_sub_ = nh_->subscribe("carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
-        // subscribe ads data requests
-        ads_health_request_sub_ = nh_->subscribe("ads_health_request", 1, &TruckInspectionClient::adsHealthRequestCallback, this);
-        ads_pretrip_request_sub_ = nh_->subscribe("ads_pretrip_request", 1, &TruckInspectionClient::adsPreTripRequestCallback, this);
+        // // subscribe ads data requests
+        // ads_health_request_sub_ = nh_->subscribe("ads_health_request", 1, &TruckInspectionClient::adsHealthRequestCallback, this);
+        // ads_pretrip_request_sub_ = nh_->subscribe("ads_pretrip_request", 1, &TruckInspectionClient::adsPreTripRequestCallback, this);
 
         this->ads_engaged_ = false;
         this->ads_system_alert_type_ = std::to_string(cav_msgs::SystemAlert::NOT_READY);
         this->ads_software_version_ = "System Version Unknown";
         this->driver_status_="s_0_l1_0_l2_0_g_0_c_0";
         //Checking: vin number does not exist yet in global parameter server
-        while((!pnh_->getParam("/vin_number", vin_number_)) && vin_retrive_count < MAX_RETRIEVE_VIN_COUNT)
+        while((!pnh_->getParam("vin_number", vin_number_)) && vin_retrive_count < MAX_RETRIEVE_VIN_COUNT)
         {
             //sleep for 0.1 second
             boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
@@ -152,65 +152,65 @@ namespace truck_inspection_client
     {
         this->ads_software_version_ = msg->data;
     }
-    // ADS health data request callback
-    void TruckInspectionClient::adsHealthRequestCallback(const std_msgs::StringConstPtr& msg)
-    {
-        cav_msgs::ADSSafety ads_health_msg;
+    // // ADS health data request callback
+    // void TruckInspectionClient::adsHealthRequestCallback(const std_msgs::StringConstPtr& msg)
+    // {
+    //     cav_msgs::ADSSafety ads_health_msg;
 
-        if (msg->data == "GET_ADS_HEALTH"){
-            long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
-            ads_health_msg.type = "ADS Health and Status";
-            ads_health_msg.m_header.timestamp = time;
-            ads_health_msg.vin = vin_number_;
-            ads_health_msg.license_plate = license_plate_;
-            ads_health_msg.latitude = current_lat_;
-            ads_health_msg.longitude = current_lon_;
-            ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
-            ads_health_msg.operational_time = operational_time_;
-            ads_health_msg.truck_operational_health = truck_operational_health_;
-            ads_safety_pub_.publish(ads_health_msg);
-        }
-    }
-    // ADS PreTrip data request callback
-    void TruckInspectionClient::adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg)
-    {
-        cav_msgs::ADSSafety ads_pretrip_msg;
-        adsHealthStatus(ads_system_alert_type_);
+    //     if (msg->data == "GET_ADS_HEALTH"){
+    //         long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+    //         ads_health_msg.type = "ADS Health and Status";
+    //         ads_health_msg.m_header.timestamp = time;
+    //         ads_health_msg.vin = vin_number_;
+    //         ads_health_msg.license_plate = license_plate_;
+    //         ads_health_msg.latitude = current_lat_;
+    //         ads_health_msg.longitude = current_lon_;
+    //         ads_health_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+    //         ads_health_msg.operational_time = operational_time_;
+    //         ads_health_msg.truck_operational_health = truck_operational_health_;
+    //         ads_safety_pub_.publish(ads_health_msg);
+    //     }
+    // }
+    // // ADS PreTrip data request callback
+    // void TruckInspectionClient::adsPreTripRequestCallback(const std_msgs::StringConstPtr& msg)
+    // {
+    //     cav_msgs::ADSSafety ads_pretrip_msg;
+    //     adsHealthStatus(ads_system_alert_type_);
 
-        long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
-        ads_pretrip_msg.m_header.timestamp = time;
-        ads_pretrip_msg.type = "Pretripinput";
-        ads_pretrip_msg.latitude = current_lat_;
-        ads_pretrip_msg.longitude = current_lon_;
-        ads_pretrip_msg.pre_trip_inspector = pre_trip_inspector_;
-        ads_pretrip_msg.inspector_id = inspector_id_;
-        ads_pretrip_msg.vehicle = vehicle_;
-        ads_pretrip_msg.vin = vin_number_;
-        ads_pretrip_msg.license_plate = license_plate_;
-        ads_pretrip_msg.state = state_short_name_;
-        ads_pretrip_msg.carrier_name = carrier_name_;
-        ads_pretrip_msg.carrier_id = carrier_id_;
-        ads_pretrip_msg.usdot_number = usdot_number_;
-        ads_pretrip_msg.gross_axle_weight = gross_axle_weight_;
-        ads_pretrip_msg.gross_veh_weight = gross_veh_weight_;
-        ads_pretrip_msg.overweight_permit_status = overweight_permit_status_;
-        ads_pretrip_msg.date_of_last_inspection = date_of_last_inspection_;
-        ads_pretrip_msg.date_of_pre_trip_inspection_tractor = date_of_pre_trip_inspection_tractor_;
-        ads_pretrip_msg.date_of_pre_trip_inspection_trailer = date_of_pre_trip_inspection_trailer_;
-        ads_pretrip_msg.iss_score = iss_score_;
-        ads_pretrip_msg.ifta_status = ifta_status_;
-        ads_pretrip_msg.irp_status = irp_status_;
-        ads_pretrip_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
-        ads_pretrip_msg.truck_operational_health = truck_operational_health_;
-        ads_pretrip_msg.tractor_operational_health = tractor_operational_health_;
-        ads_pretrip_msg.trailer_operational_health = trailer_operational_health_;
-        ads_pretrip_msg.level_of_inspection = level_of_inspection_;
-        ads_pretrip_msg.origin = origin_;
-        ads_pretrip_msg.destination = destination_;
-        ads_pretrip_msg.nearest_roadside_inspection_facility = nearest_roadside_inspection_facility_;
-        ads_pretrip_msg.preclearance_system = "PrePass";
-        ads_safety_pub_.publish(ads_pretrip_msg);
-    }
+    //     long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
+    //     ads_pretrip_msg.m_header.timestamp = time;
+    //     ads_pretrip_msg.type = "Pretripinput";
+    //     ads_pretrip_msg.latitude = current_lat_;
+    //     ads_pretrip_msg.longitude = current_lon_;
+    //     ads_pretrip_msg.pre_trip_inspector = pre_trip_inspector_;
+    //     ads_pretrip_msg.inspector_id = inspector_id_;
+    //     ads_pretrip_msg.vehicle = vehicle_;
+    //     ads_pretrip_msg.vin = vin_number_;
+    //     ads_pretrip_msg.license_plate = license_plate_;
+    //     ads_pretrip_msg.state = state_short_name_;
+    //     ads_pretrip_msg.carrier_name = carrier_name_;
+    //     ads_pretrip_msg.carrier_id = carrier_id_;
+    //     ads_pretrip_msg.usdot_number = usdot_number_;
+    //     ads_pretrip_msg.gross_axle_weight = gross_axle_weight_;
+    //     ads_pretrip_msg.gross_veh_weight = gross_veh_weight_;
+    //     ads_pretrip_msg.overweight_permit_status = overweight_permit_status_;
+    //     ads_pretrip_msg.date_of_last_inspection = date_of_last_inspection_;
+    //     ads_pretrip_msg.date_of_pre_trip_inspection_tractor = date_of_pre_trip_inspection_tractor_;
+    //     ads_pretrip_msg.date_of_pre_trip_inspection_trailer = date_of_pre_trip_inspection_trailer_;
+    //     ads_pretrip_msg.iss_score = iss_score_;
+    //     ads_pretrip_msg.ifta_status = ifta_status_;
+    //     ads_pretrip_msg.irp_status = irp_status_;
+    //     ads_pretrip_msg.ads_status = adsHealthStatus(ads_system_alert_type_);
+    //     ads_pretrip_msg.truck_operational_health = truck_operational_health_;
+    //     ads_pretrip_msg.tractor_operational_health = tractor_operational_health_;
+    //     ads_pretrip_msg.trailer_operational_health = trailer_operational_health_;
+    //     ads_pretrip_msg.level_of_inspection = level_of_inspection_;
+    //     ads_pretrip_msg.origin = origin_;
+    //     ads_pretrip_msg.destination = destination_;
+    //     ads_pretrip_msg.nearest_roadside_inspection_facility = nearest_roadside_inspection_facility_;
+    //     ads_pretrip_msg.preclearance_system = "PrePass";
+    //     ads_safety_pub_.publish(ads_pretrip_msg);
+    // }
 
     cav_msgs::ADSStatus TruckInspectionClient::adsHealthStatus(const std::string& ads_system_alert_type)
     {

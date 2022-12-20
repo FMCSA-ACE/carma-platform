@@ -1,3 +1,0 @@
-cellular_driver:
-  ros_parameters:
-    connection_strings: [ "ws://192.168.1.71:8080/PrePass/PrePassDecision/truck"]
